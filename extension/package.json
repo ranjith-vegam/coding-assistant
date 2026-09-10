@@ -1,0 +1,61 @@
+{
+  "name": "coding-assistant",
+  "displayName": "Coding Assistant",
+  "description": "A Claude-Code-like coding agent backed by locally hosted models.",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "codingAssistant.openChat",
+        "title": "Coding Assistant: Open Chat"
+      },
+      {
+        "command": "codingAssistant.switchUser",
+        "title": "Coding Assistant: Switch User"
+      }
+    ],
+    "configuration": {
+      "title": "Coding Assistant",
+      "properties": {
+        "codingAssistant.backendWsUrl": {
+          "type": "string",
+          "default": "ws://127.0.0.1:8765/ws/chat",
+          "description": "WebSocket URL of the coding-assistant-backend's chat endpoint."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./ && tsc -p webview/tsconfig.json && node esbuild.js",
+    "watch": "node esbuild.js --watch",
+    "lint": "eslint src webview/src",
+    "vscode:prepublish": "npm run compile",
+    "package": "vsce package"
+  },
+  "dependencies": {
+    "dompurify": "^3.1.6",
+    "marked": "^14.1.2",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@types/vscode": "^1.90.0",
+    "@types/ws": "^8.5.10",
+    "@vscode/vsce": "^3.1.1",
+    "esbuild": "^0.28.2",
+    "typescript": "^5.5.0"
+  }
+}

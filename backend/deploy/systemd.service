@@ -1,0 +1,14 @@
+[Unit]
+Description=Coding Assistant Backend
+After=network.target
+
+[Service]
+User=ranjith
+WorkingDirectory=/home/ranjith/samixa-coding/coding-assitant/backend
+ExecStart=/home/ranjith/.local/bin/uv run start
+Restart=always
+RestartSec=5
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,22 @@
+services:
+  coding-assistant-backend:
+    image: dev/coding-assistant-backend:0.1.0
+    container_name: coding-assistant-backend
+    network_mode: host
+
+    env_file:
+      - .env
+
+    volumes:
+      # The backend's filesystem/bash/retrieval tools operate directly on the
+      # workspace on disk -- unlike a pure API service, it needs the actual
+      # repo bind-mounted in, at the SAME path VS Code sees it at (so paths
+      # the extension sends line up with paths inside the container). Set
+      # WORKSPACE_ROOT in .env to the absolute path on the host.
+      - ${WORKSPACE_ROOT:-.}:${WORKSPACE_ROOT:-/workspace}
+      - coding_assistant_index_cache:/home/appuser/.cache/coding-assistant
+
+    restart: unless-stopped
+
+volumes:
+  coding_assistant_index_cache:
