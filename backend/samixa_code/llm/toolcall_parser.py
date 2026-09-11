@@ -31,7 +31,7 @@ import re
 import uuid
 from dataclasses import dataclass
 
-from coding_assistant.llm.types import ParsedAssistantMessage, ParsedToolCall
+from samixa_code.llm.types import ParsedAssistantMessage, ParsedToolCall
 
 _THINK_CLOSE = "</think>"
 _THINK_OPEN = "<think>"

@@ -1,4 +1,4 @@
-"""Env-driven configuration for the coding-assistant backend.
+"""Env-driven configuration for the samixa-code backend.
 
 Follows the convention used across the rest of the AI platform: plain
 SCREAMING_SNAKE_CASE env vars, loaded once at import time via pydantic-settings,

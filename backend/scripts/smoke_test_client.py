@@ -7,8 +7,8 @@ from __future__ import annotations
 
 import asyncio
 
-from coding_assistant.llm.client import ModelOrchClient
-from coding_assistant.llm.types import ChatMessage, ToolDefinition
+from samixa_code.llm.client import ModelOrchClient
+from samixa_code.llm.types import ChatMessage, ToolDefinition
 
 
 async def main() -> None:

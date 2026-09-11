@@ -64,17 +64,17 @@ from pathlib import Path
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
-from coding_assistant.agent.history_replay import history_to_display_items
-from coding_assistant.agent.loop import AgentLoop
-from coding_assistant.agent.memory import load_memory
-from coding_assistant.agent.project_doc import load_project_doc
-from coding_assistant.agent.prompts import build_system_prompt
-from coding_assistant.agent.title import generate_chat_title
-from coding_assistant.agent.tools.registry import build_default_tools
-from coding_assistant.chat_store import DEFAULT_TITLE, ChatRecord, get_chat_store
-from coding_assistant.llm.client import ModelOrchClient
-from coding_assistant.llm.types import ChatMessage
-from coding_assistant.permissions.gate import PermissionGate
+from samixa_code.agent.history_replay import history_to_display_items
+from samixa_code.agent.loop import AgentLoop
+from samixa_code.agent.memory import load_memory
+from samixa_code.agent.project_doc import load_project_doc
+from samixa_code.agent.prompts import build_system_prompt
+from samixa_code.agent.title import generate_chat_title
+from samixa_code.agent.tools.registry import build_default_tools
+from samixa_code.chat_store import DEFAULT_TITLE, ChatRecord, get_chat_store
+from samixa_code.llm.client import ModelOrchClient
+from samixa_code.llm.types import ChatMessage
+from samixa_code.permissions.gate import PermissionGate
 
 logger = logging.getLogger(__name__)
 

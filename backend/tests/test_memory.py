@@ -1,4 +1,4 @@
-from coding_assistant.agent.memory import MAX_MEMORY_CHARS, append_memory_note, load_memory, memory_path
+from samixa_code.agent.memory import MAX_MEMORY_CHARS, append_memory_note, load_memory, memory_path
 
 
 def test_load_memory_returns_none_when_file_does_not_exist(tmp_path):

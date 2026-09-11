@@ -3,7 +3,7 @@ requires      = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name            = "coding-assistant-backend"
+name            = "samixa-code-backend"
 version         = "0.1.0"
 description     = "Local agent backend for the VS Code coding assistant -- agent loop, tool execution, and retrieval over a workspace, talking to the model-orchestrator for chat/embeddings."
 readme          = "README.md"
@@ -27,11 +27,11 @@ dev = [
 ]
 
 [project.scripts]
-start = "coding_assistant.main:main"
+start = "samixa_code.main:main"
 
 [tool.setuptools.packages.find]
 where   = ["."]
-include = ["coding_assistant*"]
+include = ["samixa_code*"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

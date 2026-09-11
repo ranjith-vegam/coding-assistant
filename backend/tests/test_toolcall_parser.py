@@ -7,7 +7,7 @@ examples. If the orchestrator's output shape ever changes, these are the
 fixtures to update, and this file is the first thing to re-run.
 """
 
-from coding_assistant.llm.toolcall_parser import parse_assistant_content
+from samixa_code.llm.toolcall_parser import parse_assistant_content
 
 # --- Real capture #1: plain answer, no tools offered ---
 PLAIN_ANSWER_RAW = (

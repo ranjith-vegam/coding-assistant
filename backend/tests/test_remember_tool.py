@@ -1,6 +1,6 @@
-from coding_assistant.agent.memory import load_memory
-from coding_assistant.agent.tools.base import ToolError
-from coding_assistant.agent.tools.remember_tool import RememberTool
+from samixa_code.agent.memory import load_memory
+from samixa_code.agent.tools.base import ToolError
+from samixa_code.agent.tools.remember_tool import RememberTool
 
 
 async def test_remember_tool_persists_a_note(tmp_path):

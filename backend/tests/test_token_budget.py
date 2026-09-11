@@ -1,5 +1,5 @@
-from coding_assistant.llm.token_budget import MIN_TOOL_CONTENT_CHARS, estimate_tokens, fit_history_to_budget
-from coding_assistant.llm.types import ChatMessage
+from samixa_code.llm.token_budget import MIN_TOOL_CONTENT_CHARS, estimate_tokens, fit_history_to_budget
+from samixa_code.llm.types import ChatMessage
 
 
 def test_estimate_tokens_is_positive_and_roughly_proportional():

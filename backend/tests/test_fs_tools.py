@@ -1,5 +1,5 @@
-from coding_assistant.agent.tools.base import ToolError, resolve_in_workspace
-from coding_assistant.agent.tools.fs_tools import EditFileTool, ReadFileTool, WriteFileTool
+from samixa_code.agent.tools.base import ToolError, resolve_in_workspace
+from samixa_code.agent.tools.fs_tools import EditFileTool, ReadFileTool, WriteFileTool
 
 
 def test_resolve_in_workspace_allows_relative_path_inside(tmp_path):

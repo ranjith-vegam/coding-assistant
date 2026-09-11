@@ -13,9 +13,9 @@ import logging
 
 import httpx
 
-from coding_assistant.llm.toolcall_parser import parse_assistant_content
-from coding_assistant.llm.types import ChatMessage, EmbeddingResult, ParsedAssistantMessage, ToolDefinition
-from coding_assistant.settings import Settings, get_settings
+from samixa_code.llm.toolcall_parser import parse_assistant_content
+from samixa_code.llm.types import ChatMessage, EmbeddingResult, ParsedAssistantMessage, ToolDefinition
+from samixa_code.settings import Settings, get_settings
 
 logger = logging.getLogger(__name__)
 

@@ -34,7 +34,7 @@ overflowed on a real case):
 
 from __future__ import annotations
 
-from coding_assistant.llm.types import ChatMessage
+from samixa_code.llm.types import ChatMessage
 
 CHARS_PER_TOKEN_ESTIMATE = 3.2  # conservative -- overestimates tokens, not under
 PER_MESSAGE_OVERHEAD_TOKENS = 8  # role/formatting overhead, rough

@@ -1,4 +1,4 @@
-from coding_assistant.agent.checkpoints import CheckpointStore, restore_files
+from samixa_code.agent.checkpoints import CheckpointStore, restore_files
 
 
 def test_record_pre_edit_state_captures_existing_content_once(tmp_path):

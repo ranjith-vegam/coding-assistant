@@ -1,6 +1,6 @@
-from coding_assistant.agent.title import MAX_TITLE_CHARS, generate_chat_title
-from coding_assistant.llm.client import ModelOrchError
-from coding_assistant.llm.types import ParsedAssistantMessage
+from samixa_code.agent.title import MAX_TITLE_CHARS, generate_chat_title
+from samixa_code.llm.client import ModelOrchError
+from samixa_code.llm.types import ParsedAssistantMessage
 
 
 class FakeLLM:

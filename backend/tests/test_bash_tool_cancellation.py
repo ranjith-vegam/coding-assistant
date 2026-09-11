@@ -8,7 +8,7 @@ import os
 
 import pytest
 
-from coding_assistant.agent.tools.bash_tool import RunCommandTool
+from samixa_code.agent.tools.bash_tool import RunCommandTool
 
 
 async def test_cancelling_run_command_kills_the_subprocess(tmp_path):

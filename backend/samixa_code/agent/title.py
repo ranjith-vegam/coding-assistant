@@ -17,8 +17,8 @@ from __future__ import annotations
 
 import logging
 
-from coding_assistant.llm.client import ModelOrchClient, ModelOrchError
-from coding_assistant.llm.types import ChatMessage
+from samixa_code.llm.client import ModelOrchClient, ModelOrchError
+from samixa_code.llm.types import ChatMessage
 
 logger = logging.getLogger(__name__)
 

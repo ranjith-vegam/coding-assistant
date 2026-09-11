@@ -6,12 +6,12 @@ captures). asyncio_mode = "auto" in pyproject.toml -- no @pytest.mark.asyncio ne
 
 import asyncio
 
-from coding_assistant.agent.loop import CALIBRATION_MAX, MAX_CONTEXT_RETRIES, MAX_TOOL_TURNS, AgentLoop
-from coding_assistant.agent.tools.base import ToolResult
-from coding_assistant.agent.tools.fs_tools import EditFileTool, WriteFileTool
-from coding_assistant.llm.client import ContextLengthExceededError
-from coding_assistant.llm.types import ChatMessage, ParsedAssistantMessage, ParsedToolCall
-from coding_assistant.permissions.gate import PermissionGate
+from samixa_code.agent.loop import CALIBRATION_MAX, MAX_CONTEXT_RETRIES, MAX_TOOL_TURNS, AgentLoop
+from samixa_code.agent.tools.base import ToolResult
+from samixa_code.agent.tools.fs_tools import EditFileTool, WriteFileTool
+from samixa_code.llm.client import ContextLengthExceededError
+from samixa_code.llm.types import ChatMessage, ParsedAssistantMessage, ParsedToolCall
+from samixa_code.permissions.gate import PermissionGate
 
 
 class FakeLLM:
@@ -137,7 +137,7 @@ async def test_max_tool_turns_forces_a_final_answer_instead_of_silence(tmp_path)
 
 
 async def test_wrap_up_call_failing_still_surfaces_an_error(tmp_path):
-    from coding_assistant.llm.client import ModelOrchError
+    from samixa_code.llm.client import ModelOrchError
 
     class FailingWrapUpLLM(FakeLLM):
         async def chat(self, messages, tools=None, tool_choice="auto", temperature=0.2, max_tokens=4096):

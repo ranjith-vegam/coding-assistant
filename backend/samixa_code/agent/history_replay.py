@@ -19,8 +19,8 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
-from coding_assistant.llm.toolcall_parser import parse_assistant_content
-from coding_assistant.llm.types import ChatMessage
+from samixa_code.llm.toolcall_parser import parse_assistant_content
+from samixa_code.llm.types import ChatMessage
 
 
 def history_to_display_items(messages: list[ChatMessage]) -> list[dict[str, Any]]:

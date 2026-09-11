@@ -61,7 +61,7 @@ help:
 # Dev targets
 # -----------------------------
 dev:
-	uv run uvicorn coding_assistant.main:app --reload --host 127.0.0.1 --port 8765
+	uv run uvicorn samixa_code.main:app --reload --host 127.0.0.1 --port 8765
 
 test:
 	uv run pytest -q

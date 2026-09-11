@@ -1,5 +1,5 @@
-from coding_assistant.agent.history_replay import history_to_display_items
-from coding_assistant.llm.types import ChatMessage
+from samixa_code.agent.history_replay import history_to_display_items
+from samixa_code.llm.types import ChatMessage
 
 
 def test_plain_user_and_assistant_turn():

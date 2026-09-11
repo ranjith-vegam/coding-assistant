@@ -1,4 +1,4 @@
-# coding-assistant-backend
+# samixa-code-backend
 
 Local agent backend for the VS Code coding assistant. Runs on the developer's
 own machine (or a reachable dev box), talks to the existing model-orchestrator
@@ -15,13 +15,13 @@ and the permission-approval flow.
 ```bash
 uv sync                # install deps into .venv
 cp .env.example .env   # fill in model-orchestrator URL/token
-uv run start           # runs coding_assistant.main:main
+uv run start           # runs samixa_code.main:main
 ```
 
 ## Layout
 
 ```
-coding_assistant/
+samixa_code/
 ├── main.py            # FastAPI app + uvicorn entrypoint
 ├── settings.py         # env-driven configuration
 ├── api/                 # HTTP/WS routes the extension talks to

@@ -1,4 +1,4 @@
-from coding_assistant.agent.project_doc import MAX_PROJECT_DOC_CHARS, load_project_doc, project_doc_path
+from samixa_code.agent.project_doc import MAX_PROJECT_DOC_CHARS, load_project_doc, project_doc_path
 
 
 def test_load_project_doc_returns_none_when_file_does_not_exist(tmp_path):

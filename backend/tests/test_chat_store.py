@@ -1,7 +1,7 @@
 from fakeredis import aioredis as fakeredis
 
-from coding_assistant.chat_store import ChatStore, DEFAULT_TITLE
-from coding_assistant.llm.types import ChatMessage
+from samixa_code.chat_store import ChatStore, DEFAULT_TITLE
+from samixa_code.llm.types import ChatMessage
 
 
 def make_store() -> ChatStore:

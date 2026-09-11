@@ -10,12 +10,12 @@ import asyncio
 import tempfile
 from pathlib import Path
 
-from coding_assistant.agent.loop import AgentLoop
-from coding_assistant.agent.prompts import build_system_prompt
-from coding_assistant.agent.tools.registry import build_default_tools
-from coding_assistant.llm.client import ModelOrchClient
-from coding_assistant.llm.types import ChatMessage
-from coding_assistant.permissions.gate import PermissionGate
+from samixa_code.agent.loop import AgentLoop
+from samixa_code.agent.prompts import build_system_prompt
+from samixa_code.agent.tools.registry import build_default_tools
+from samixa_code.llm.client import ModelOrchClient
+from samixa_code.llm.types import ChatMessage
+from samixa_code.permissions.gate import PermissionGate
 
 
 async def auto_approve(call_id: str, name: str, arguments: dict) -> bool:

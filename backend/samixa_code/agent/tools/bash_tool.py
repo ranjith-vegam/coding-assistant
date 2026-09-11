@@ -11,7 +11,7 @@ import asyncio
 from pathlib import Path
 from typing import Any
 
-from coding_assistant.agent.tools.base import ToolError, ToolResult
+from samixa_code.agent.tools.base import ToolError, ToolResult
 
 DEFAULT_TIMEOUT_SECONDS = 30
 MAX_TIMEOUT_SECONDS = 120

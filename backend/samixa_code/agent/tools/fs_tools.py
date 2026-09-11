@@ -10,7 +10,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from coding_assistant.agent.tools.base import ToolError, ToolResult, resolve_in_workspace
+from samixa_code.agent.tools.base import ToolError, ToolResult, resolve_in_workspace
 
 # Confirmed live against the real model-orch deployment: its context window
 # is 16384 tokens TOTAL. These are sized so one read_file call can't blow

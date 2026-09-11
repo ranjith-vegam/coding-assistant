@@ -21,8 +21,8 @@ from functools import lru_cache
 
 import redis.asyncio as redis
 
-from coding_assistant.llm.types import ChatMessage
-from coding_assistant.settings import get_settings
+from samixa_code.llm.types import ChatMessage
+from samixa_code.settings import get_settings
 
 DEFAULT_TITLE = "New Chat"
 # A title generated from the first user message, capped so the chat-list

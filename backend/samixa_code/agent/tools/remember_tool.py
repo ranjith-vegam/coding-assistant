@@ -5,8 +5,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from coding_assistant.agent.memory import append_memory_note
-from coding_assistant.agent.tools.base import ToolError, ToolResult
+from samixa_code.agent.memory import append_memory_note
+from samixa_code.agent.tools.base import ToolError, ToolResult
 
 
 class RememberTool:

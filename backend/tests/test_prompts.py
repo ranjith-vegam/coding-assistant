@@ -1,4 +1,4 @@
-from coding_assistant.agent.prompts import build_system_prompt
+from samixa_code.agent.prompts import build_system_prompt
 
 
 def test_no_project_doc_tells_model_none_exists_and_offers_to_create_one():

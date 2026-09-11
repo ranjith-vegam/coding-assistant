@@ -11,7 +11,7 @@ import asyncio
 from pathlib import Path
 from typing import Any
 
-from coding_assistant.agent.tools.base import ToolError, ToolResult, resolve_in_workspace
+from samixa_code.agent.tools.base import ToolError, ToolResult, resolve_in_workspace
 
 # See fs_tools.py MAX_RETURNED_CHARS comment -- same 16384-token deployed
 # context window, same reasoning: a big match set must not overflow it alone.

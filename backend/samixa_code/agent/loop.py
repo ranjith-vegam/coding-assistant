@@ -14,13 +14,13 @@ import logging
 from pathlib import Path
 from typing import Any, Awaitable, Callable
 
-from coding_assistant.agent.checkpoints import Checkpoint, CheckpointStore, RestoreResult, restore_files
-from coding_assistant.agent.tools.base import Tool, ToolError, resolve_in_workspace
-from coding_assistant.llm.client import ContextLengthExceededError, ModelOrchClient, ModelOrchError
-from coding_assistant.llm.token_budget import estimate_message_tokens, estimate_tokens, fit_history_to_budget
-from coding_assistant.llm.types import ChatMessage, ParsedAssistantMessage, ParsedToolCall, ToolDefinition
-from coding_assistant.permissions.gate import ApprovalDenied, PermissionGate
-from coding_assistant.settings import get_settings
+from samixa_code.agent.checkpoints import Checkpoint, CheckpointStore, RestoreResult, restore_files
+from samixa_code.agent.tools.base import Tool, ToolError, resolve_in_workspace
+from samixa_code.llm.client import ContextLengthExceededError, ModelOrchClient, ModelOrchError
+from samixa_code.llm.token_budget import estimate_message_tokens, estimate_tokens, fit_history_to_budget
+from samixa_code.llm.types import ChatMessage, ParsedAssistantMessage, ParsedToolCall, ToolDefinition
+from samixa_code.permissions.gate import ApprovalDenied, PermissionGate
+from samixa_code.settings import get_settings
 
 logger = logging.getLogger(__name__)
 

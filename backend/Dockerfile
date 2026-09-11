@@ -1,5 +1,5 @@
 # =============================================================================
-# coding-assistant-backend
+# samixa-code-backend
 # =============================================================================
 # Build context: backend/
 #   This service talks to an external model-orchestrator over HTTP (see
@@ -43,10 +43,10 @@ WORKDIR /app
 COPY --from=builder /app/.venv /app/.venv
 
 # Application source.
-COPY coding_assistant/ ./coding_assistant/
+COPY samixa_code/ ./samixa_code/
 COPY pyproject.toml ./
 
-RUN mkdir -p /home/appuser/.cache/coding-assistant \
+RUN mkdir -p /home/appuser/.cache/samixa \
     && chown -R appuser:appgroup /app /home/appuser
 
 USER appuser
@@ -61,4 +61,4 @@ EXPOSE 8765
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
     CMD curl -sf http://localhost:${SERVICE_PORT:-8765}/health || exit 1
 
-CMD ["python", "-m", "coding_assistant"]
+CMD ["python", "-m", "samixa_code"]
