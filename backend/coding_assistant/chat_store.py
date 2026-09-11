@@ -105,16 +105,24 @@ class ChatStore:
             messages=[_message_from_dict(m) for m in data["messages"]],
         )
 
-    async def save_messages(self, chat_id: str, user_id: str, workspace_root: str, messages: list[ChatMessage]) -> None:
+    async def save_messages(
+        self, chat_id: str, user_id: str, workspace_root: str, messages: list[ChatMessage], generated_title: str | None = None
+    ) -> None:
         """Overwrites a chat's message list wholesale -- simpler and safer
         than trying to append incrementally against a JSON blob, and chats
-        are small enough (a handful of turns) that this is cheap."""
+        are small enough (a handful of turns) that this is cheap.
+
+        `generated_title` is the one-time LLM-generated title (see
+        agent/title.py), passed in by the caller since generating it needs
+        an LLM call this data-persistence layer has no business making.
+        Falls back to the old first-message heuristic if it's None (e.g. the
+        LLM call failed) and no real title has been set yet."""
         existing = await self.load_chat(chat_id)
         now = time.time()
         created_at = existing.created_at if existing else now
         title = existing.title if existing else DEFAULT_TITLE
         if title == DEFAULT_TITLE:
-            title = _derive_title(messages) or title
+            title = generated_title or _derive_title(messages) or title
 
         record = ChatRecord(
             chat_id=chat_id,

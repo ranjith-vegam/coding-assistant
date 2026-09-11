@@ -85,9 +85,9 @@ export function Composer({ onSend, onCancel, connected, turnActive, controlRef }
             <span className={`composer-connection-dot ${connected ? "on" : "off"}`} />
             {connected ? "Connected" : "Reconnecting…"}
           </span>
-          <span className="composer-hint">
-            {turnActive ? "" : "Enter to send · Shift+Enter for a new line"}
-          </span>
+          {/* Spacer only (flex: 1 1 auto) -- pushes the send button to the
+              right of the connection indicator; intentionally no text. */}
+          <span className="composer-hint" />
           {turnActive ? (
             <button className="send-button stop" onClick={onCancel} aria-label="Stop">
               <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">

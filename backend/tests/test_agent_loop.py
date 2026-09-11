@@ -176,16 +176,72 @@ async def test_unknown_tool_name_is_reported_not_crashed(tmp_path):
     assert "Unknown tool" in tool_results[0]["content"]
 
 
-async def test_possibly_truncated_response_aborts_the_turn_cleanly(tmp_path):
-    responses = [ParsedAssistantMessage(thinking=None, text="", tool_calls=[], possibly_truncated=True, raw="r1")]
+async def test_possibly_truncated_response_retries_then_aborts_cleanly_if_still_cut_off(tmp_path):
+    """Every attempt still comes back truncated -- the loop must retry
+    truncation_retry_max_attempts times (asking for more reply room each
+    time, not the same call over and over) and then give up cleanly, not
+    hang forever. (Env-configurable -- see settings.py.)"""
+    llm = FakeLLM([])
+    loop = AgentLoop(llm, {}, PermissionGate(always_approve), tmp_path)
+    max_attempts = loop._truncation_retry_max_attempts
+
+    llm._responses = [
+        ParsedAssistantMessage(thinking=None, text="", tool_calls=[], possibly_truncated=True, raw=f"r{i}")
+        for i in range(max_attempts)
+    ]
+
+    history = [ChatMessage(role="user", content="hi")]
+    events = await collect_events(loop, history)
+
+    assert any(e["type"] == "error" and "cut off" in e["message"] for e in events)
+    assert llm.calls == max_attempts
+    # only the LAST (still-truncated) attempt is replayed into history -- not
+    # one entry per retry, which would confuse the model's chat template.
+    assert [m.role for m in history] == ["user", "assistant"]
+
+
+async def test_possibly_truncated_response_recovers_on_retry(tmp_path):
+    """The common real case: the first attempt got cut off (hit
+    reply_max_tokens mid tool-call), a retry with more room completes fine."""
+    responses = [
+        ParsedAssistantMessage(thinking=None, text="", tool_calls=[], possibly_truncated=True, raw="cut off"),
+        ParsedAssistantMessage(thinking=None, text="all good now", tool_calls=[], raw="r2"),
+    ]
     llm = FakeLLM(responses)
     loop = AgentLoop(llm, {}, PermissionGate(always_approve), tmp_path)
 
     history = [ChatMessage(role="user", content="hi")]
     events = await collect_events(loop, history)
 
-    assert any(e["type"] == "error" and "cut off" in e["message"] for e in events)
-    assert llm.calls == 1  # must not retry on its own -- surfaced to the user instead
+    assert not any(e["type"] == "error" for e in events)
+    assert any(e["type"] == "message" and e.get("final") and e["text"] == "all good now" for e in events)
+    assert llm.calls == 2
+    # the truncated first attempt must never have been appended to history
+    assert [m.content for m in history if m.role == "assistant"] == ["r2"]
+
+
+async def test_truncation_retry_asks_for_a_bigger_reply_budget_each_attempt(tmp_path):
+    seen_max_tokens = []
+
+    class RecordingLLM:
+        def __init__(self, responses):
+            self._responses = list(responses)
+
+        async def chat(self, messages, tools=None, tool_choice="auto", temperature=0.2, max_tokens=4096):
+            seen_max_tokens.append(max_tokens)
+            return self._responses.pop(0)
+
+    responses = [
+        ParsedAssistantMessage(thinking=None, text="", tool_calls=[], possibly_truncated=True, raw="r1"),
+        ParsedAssistantMessage(thinking=None, text="done", tool_calls=[], raw="r2"),
+    ]
+    loop = AgentLoop(RecordingLLM(responses), {}, PermissionGate(always_approve), tmp_path)
+
+    history = [ChatMessage(role="user", content="hi")]
+    await collect_events(loop, history)
+
+    assert len(seen_max_tokens) == 2
+    assert seen_max_tokens[1] > seen_max_tokens[0]
 
 
 async def test_record_usage_increases_calibration_when_real_tokens_exceed_estimate(tmp_path):

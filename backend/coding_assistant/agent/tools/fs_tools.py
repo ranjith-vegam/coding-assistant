@@ -130,7 +130,11 @@ class WriteFileTool:
 
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(content, encoding="utf-8")
-        return ToolResult(content=f"wrote {len(content)} bytes to {arguments.get('path')}")
+        # Line count, not byte size -- more useful to the model (and to a
+        # human reading the tool-call log) for judging whether a write did
+        # roughly what was intended than an opaque byte count.
+        line_count = len(content.splitlines())
+        return ToolResult(content=f"wrote {line_count} line{'s' if line_count != 1 else ''} to {arguments.get('path')}")
 
 
 class EditFileTool:

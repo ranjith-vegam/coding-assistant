@@ -102,17 +102,26 @@ function reducer(state: State, action: Action): State {
       return { ...state, thinking: true };
 
     case "checkpoint_created": {
-      // Attach to the most recent user item that doesn't have one yet --
-      // checkpoint_created always arrives for the turn that was just queued,
-      // and turns are processed one at a time, so this is unambiguous.
-      let attached = false;
-      const items = state.items.map((item): TimelineItem => {
-        if (!attached && item.kind === "user" && item.checkpointId === null) {
-          attached = true;
-          return { ...item, checkpointId: event.id };
+      // Attach to the LAST (most recently added) user item that doesn't have
+      // one yet -- NOT the first. Historical items loaded from Redis are
+      // seeded with checkpointId: null too (replayItemToTimelineItem, since
+      // they have no live backing checkpoint), so after loading a chat with
+      // history and then sending a new message, scanning front-to-back would
+      // wrongly attach this turn's checkpoint to an old historical message
+      // instead of the one just sent -- leaving the actual new message
+      // without a Rewind button forever. Scanning from the end finds the
+      // message that just started this turn, which is always the most
+      // recent one regardless of how much older unattached history precedes it.
+      let targetIndex = -1;
+      for (let i = state.items.length - 1; i >= 0; i--) {
+        const item = state.items[i];
+        if (item.kind === "user" && item.checkpointId === null) {
+          targetIndex = i;
+          break;
         }
-        return item;
-      });
+      }
+      if (targetIndex === -1) return state;
+      const items = state.items.map((item, i) => (i === targetIndex ? { ...item, checkpointId: event.id } : item));
       return { ...state, items };
     }
 
@@ -212,6 +221,17 @@ function reducer(state: State, action: Action): State {
         chatId: event.chat_id,
         chatTitle: event.title,
         items: event.items.map(replayItemToTimelineItem),
+      };
+
+    case "chat_renamed":
+      return {
+        ...state,
+        // Only update the header if this rename is for the chat currently
+        // open -- it always is in practice (one connection, one active chat
+        // at a time) but this guard costs nothing and avoids a stale rename
+        // landing after a fast switch_chat.
+        chatTitle: event.chat_id === state.chatId ? event.title : state.chatTitle,
+        chats: state.chats.map((c) => (c.chat_id === event.chat_id ? { ...c, title: event.title } : c)),
       };
 
     case "chat_list":

@@ -27,6 +27,10 @@ Wire protocol (JSON over one WebSocket connection):
                                                                               (see agent/history_replay.py),
                                                                               sent on init/new_chat/switch_chat
     {"type": "chat_list", "chats": [{chat_id, title, workspace_root, updated_at}, ...]}
+    {"type": "chat_renamed", "chat_id": ..., "title": ...}   -- sent once, right after the
+                                                                 chat's first turn, when a
+                                                                 real title was generated
+                                                                 (see agent/title.py)
     {"type": "cancelled"}
     {"type": "error", "message": ...}
 
@@ -63,9 +67,11 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from coding_assistant.agent.history_replay import history_to_display_items
 from coding_assistant.agent.loop import AgentLoop
 from coding_assistant.agent.memory import load_memory
+from coding_assistant.agent.project_doc import load_project_doc
 from coding_assistant.agent.prompts import build_system_prompt
+from coding_assistant.agent.title import generate_chat_title
 from coding_assistant.agent.tools.registry import build_default_tools
-from coding_assistant.chat_store import ChatRecord, get_chat_store
+from coding_assistant.chat_store import DEFAULT_TITLE, ChatRecord, get_chat_store
 from coding_assistant.llm.client import ModelOrchClient
 from coding_assistant.llm.types import ChatMessage
 from coding_assistant.permissions.gate import PermissionGate
@@ -136,10 +142,19 @@ async def ws_chat(websocket: WebSocket) -> None:
         """Makes `record` the active chat for this connection -- (re)builds
         the in-memory history/AgentLoop and tells the frontend the full
         reconstructed timeline. Only call while no turn is in flight."""
-        system_prompt = build_system_prompt(str(workspace_root), memory=load_memory(workspace_root))
+        system_prompt = build_system_prompt(
+            str(workspace_root),
+            memory=load_memory(workspace_root),
+            project_doc=load_project_doc(workspace_root),
+        )
         session["chat_id"] = record.chat_id
         session["history"] = [ChatMessage(role="system", content=system_prompt), *record.messages]
         session["loop"] = AgentLoop(client, tools, gate, workspace_root)
+        # Only ever attempt the one-time LLM title generation if this chat
+        # doesn't already have a real title -- a resumed chat that was
+        # already titled (by this or the old heuristic) must never be
+        # silently renamed out from under the user on a later turn.
+        session["title_generated"] = record.title != DEFAULT_TITLE
         await emit(
             {
                 "type": "chat_ready",
@@ -151,7 +166,22 @@ async def ws_chat(websocket: WebSocket) -> None:
 
     async def persist_active_chat() -> None:
         history: list[ChatMessage] = session["history"]  # type: ignore[assignment]
-        await store.save_messages(session["chat_id"], user_id, str(workspace_root), history[1:])  # skip the system message
+        messages = history[1:]  # skip the system message
+
+        generated_title: str | None = None
+        if not session.get("title_generated") and any(m.role == "user" for m in messages):
+            # Only ever tried once per chat, whether it succeeds or not --
+            # see the flag set here and in enter_chat. A failed attempt
+            # falls back to chat_store's old heuristic, not a retry loop.
+            first_user = next(m for m in messages if m.role == "user")
+            generated_title = await generate_chat_title(client, first_user.content)
+            session["title_generated"] = True
+            if generated_title:
+                await emit({"type": "chat_renamed", "chat_id": session["chat_id"], "title": generated_title})
+
+        await store.save_messages(
+            session["chat_id"], user_id, str(workspace_root), messages, generated_title=generated_title
+        )
 
     def turn_in_progress() -> bool:
         task = current_run_task["task"]

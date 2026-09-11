@@ -63,6 +63,14 @@ CALIBRATION_MAX = 6.0
 MAX_CONTEXT_RETRIES = 4
 CONTEXT_RETRY_SHRINK_FACTOR = 0.6
 
+# A "possibly_truncated" parse (see toolcall_parser.py) most often means the
+# model hit model_orch_reply_max_tokens mid tool-call, not that it's
+# genuinely confused -- so the fix that actually addresses the cause is
+# retrying with MORE reply budget, not just resending the same request and
+# hoping. Env-configurable (truncation_retry_max_attempts/_growth_factor in
+# settings.py) since the right values depend on the deployed model/orchestrator,
+# not something to hardcode -- see AgentLoop.__init__.
+
 # Tools whose changes are tracked for rewind -- see agent/checkpoints.py.
 # Deliberately excludes run_command: matches Claude Code's own checkpointing
 # limitation (arbitrary shell effects can't be reliably snapshotted/reversed).
@@ -87,6 +95,8 @@ class AgentLoop:
         settings = get_settings()
         self._context_window_tokens = settings.model_orch_context_window_tokens
         self._reply_max_tokens = settings.model_orch_reply_max_tokens
+        self._truncation_retry_max_attempts = settings.truncation_retry_max_attempts
+        self._truncation_retry_growth_factor = settings.truncation_retry_growth_factor
         # The tool schemas themselves (name/description/JSON-schema per tool)
         # ride along on every call that offers tools -- real prompt tokens the
         # history-only estimate below doesn't see. Computed once since the
@@ -96,43 +106,55 @@ class AgentLoop:
         self._checkpoints = CheckpointStore()
         self._active_checkpoint: Checkpoint | None = None
 
-    def _budgeted(self, history: list[ChatMessage], *, with_tools: bool, shrink: float = 1.0) -> list[ChatMessage]:
+    def _budgeted(
+        self, history: list[ChatMessage], *, with_tools: bool, shrink: float = 1.0, reply_max_tokens: int | None = None
+    ) -> list[ChatMessage]:
         """A trimmed COPY for this one call -- see token_budget.py. `history`
         itself is never mutated; the full conversation is kept for replay/
         display, only what's sent to the model this call is reduced.
 
         `shrink` further reduces the usable window below 1.0 -- used by the
-        context-retry loop below when the estimate turned out to be wrong."""
-        reserved = self._reply_max_tokens
+        context-retry loop below when the estimate turned out to be wrong.
+        `reply_max_tokens` overrides the reserved reply budget for this one
+        call -- used by the truncation-retry loop, which asks for MORE reply
+        room on retry, so the reservation must grow to match or the extra
+        room it just asked for would immediately get eaten back by history."""
+        reserved = reply_max_tokens if reply_max_tokens is not None else self._reply_max_tokens
         if with_tools:
             reserved += int(self._tool_schema_tokens * self._token_calibration)
         effective_context = int(self._context_window_tokens * shrink)
         return fit_history_to_budget(history, effective_context, reserved, calibration=self._token_calibration)
 
     async def _chat_with_context_retry(
-        self, history: list[ChatMessage], *, with_tools: bool
+        self, history: list[ChatMessage], *, with_tools: bool, reply_max_tokens: int | None = None
     ) -> tuple[list[ChatMessage], ParsedAssistantMessage]:
         """The real guarantee against overflowing the context window -- see
         MAX_CONTEXT_RETRIES comment. Returns (sent, response) so the caller
         can still replay/append normally; raises the last ContextLengthExceededError
-        if even the most aggressively shrunk attempt still doesn't fit."""
+        if even the most aggressively shrunk attempt still doesn't fit.
+
+        `reply_max_tokens` lets a caller ask for a bigger (or smaller) reply
+        budget than the configured default for this one call -- see
+        _chat_with_truncation_retry, which grows it across attempts."""
+        reply_max_tokens = reply_max_tokens if reply_max_tokens is not None else self._reply_max_tokens
         shrink = 1.0
         last_exc: ContextLengthExceededError | None = None
         tool_defs = self._tool_defs if with_tools else None
 
         for attempt in range(MAX_CONTEXT_RETRIES):
-            sent = self._budgeted(history, with_tools=with_tools, shrink=shrink)
+            sent = self._budgeted(history, with_tools=with_tools, shrink=shrink, reply_max_tokens=reply_max_tokens)
             logger.debug(
-                "_chat_with_context_retry attempt=%d shrink=%.4f calibration=%.2f history_len=%d sent_len=%d sent_chars=%d",
+                "_chat_with_context_retry attempt=%d shrink=%.4f calibration=%.2f reply_max_tokens=%d history_len=%d sent_len=%d sent_chars=%d",
                 attempt,
                 shrink,
                 self._token_calibration,
+                reply_max_tokens,
                 len(history),
                 len(sent),
                 sum(len(m.content) for m in sent),
             )
             try:
-                response = await self._llm.chat(sent, tools=tool_defs, max_tokens=self._reply_max_tokens)
+                response = await self._llm.chat(sent, tools=tool_defs, max_tokens=reply_max_tokens)
             except ContextLengthExceededError as exc:
                 last_exc = exc
                 logger.warning(
@@ -152,6 +174,38 @@ class AgentLoop:
 
         assert last_exc is not None
         raise last_exc
+
+    async def _chat_with_truncation_retry(
+        self, history: list[ChatMessage], *, with_tools: bool
+    ) -> tuple[list[ChatMessage], ParsedAssistantMessage]:
+        """Retries a response that looks cut off mid tool-call (see
+        toolcall_parser.py's possibly_truncated) by asking for MORE reply
+        room each attempt -- the usual cause is hitting model_orch_reply_max_tokens
+        before the closing tag arrived, so resending identically would just
+        reproduce the same cutoff. Gives up after truncation_retry_max_attempts
+        (settings.py) and returns the last (still truncated) attempt -- the
+        caller decides what to do with a response that's still truncated
+        after that; this method never raises for truncation itself, only
+        ModelOrchError propagates."""
+        reply_max_tokens = self._reply_max_tokens
+        sent, parsed = await self._chat_with_context_retry(history, with_tools=with_tools, reply_max_tokens=reply_max_tokens)
+
+        for attempt in range(1, self._truncation_retry_max_attempts):
+            if not parsed.possibly_truncated:
+                return sent, parsed
+            reply_max_tokens = min(
+                self._context_window_tokens // 2,
+                int(reply_max_tokens * self._truncation_retry_growth_factor),
+            )
+            logger.warning(
+                "response looked cut off mid tool-call (attempt %d/%d) -- retrying with reply_max_tokens=%d",
+                attempt,
+                self._truncation_retry_max_attempts,
+                reply_max_tokens,
+            )
+            sent, parsed = await self._chat_with_context_retry(history, with_tools=with_tools, reply_max_tokens=reply_max_tokens)
+
+        return sent, parsed
 
     def _record_usage(self, sent: list[ChatMessage], with_tools: bool, response: ParsedAssistantMessage) -> None:
         """Self-corrects _token_calibration from the REAL usage.prompt_tokens
@@ -190,7 +244,7 @@ class AgentLoop:
             await emit({"type": "status", "status": "thinking"})
 
             try:
-                _sent, parsed = await self._chat_with_context_retry(history, with_tools=True)
+                _sent, parsed = await self._chat_with_truncation_retry(history, with_tools=True)
             except ModelOrchError as exc:
                 logger.warning("model-orch call failed: %s", exc)
                 await emit({"type": "error", "message": str(exc)})
@@ -202,11 +256,14 @@ class AgentLoop:
             history.append(ChatMessage(role="assistant", content=parsed.raw))
 
             if parsed.possibly_truncated:
+                # _chat_with_truncation_retry already retried with growing
+                # reply budgets and it's STILL cut off -- surface it now
+                # rather than retry forever.
                 await emit(
                     {
                         "type": "error",
-                        "message": "The model's response looked cut off mid tool-call. Try again, "
-                        "or ask a more specific question.",
+                        "message": f"The model's response looked cut off mid tool-call after "
+                        f"{self._truncation_retry_max_attempts} attempts. Try again, or ask a more specific question.",
                     }
                 )
                 return

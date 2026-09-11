@@ -35,6 +35,10 @@ export type BackendEvent =
       skipped_files: string[];
     }
   | { type: "chat_ready"; chat_id: string; title: string; items: ReplayItem[] }
+  // Sent once, right after a chat's first turn completes, when a real
+  // (LLM-generated -- see backend agent/title.py) title replaces "New Chat".
+  // Never sent again after that for the same chat.
+  | { type: "chat_renamed"; chat_id: string; title: string }
   | { type: "chat_list"; chats: ChatSummary[] }
   | { type: "cancelled" }
   | { type: "error"; message: string }

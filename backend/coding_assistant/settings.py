@@ -37,6 +37,16 @@ class Settings(BaseSettings):
     # don't need much, and every token reserved here is a token NOT available
     # for input against the 16k ceiling above.
     model_orch_reply_max_tokens: int = 1024
+    # A "possibly_truncated" parse (toolcall_parser.py) usually means a
+    # response hit model_orch_reply_max_tokens mid tool-call -- the fix that
+    # addresses the cause is retrying with MORE reply room, not resending the
+    # same request. See agent/loop.py's _chat_with_truncation_retry.
+    truncation_retry_max_attempts: int = 3
+    # Multiplicative growth per retry attempt (mirrors CONTEXT_RETRY_SHRINK_FACTOR's
+    # shape, opposite direction). The grown value is still capped at half the
+    # context window in loop.py, so a runaway retry can't itself trigger a
+    # context-length error.
+    truncation_retry_growth_factor: float = 1.6
 
     # --- This service's own listening socket ---
     # 0.0.0.0: reachable from other machines (e.g. VS Code on a laptop talking
@@ -54,7 +64,7 @@ class Settings(BaseSettings):
     # by a hash of the workspace root path, so multiple workspaces don't collide.
     # NOTE: not wired up to anything yet -- the retrieval/indexing layer this
     # was meant for hasn't been built. Placeholder, not live config.
-    index_cache_dir: str = "~/.cache/coding-assistant/index"
+    index_cache_dir: str = "~/.cache/samixa/index"
 
     # --- Chat persistence (Redis) ---
     # Points at the redis-stack instance already running for this project

@@ -7,20 +7,25 @@ large-repo indexing (see docs/ARCHITECTURE.md's retrieval/ section, still
 unbuilt: no embeddings, no vector store here). It's a flat, human-readable
 file the model is told to consult and update -- the same idea as Claude
 Code's own memory files (CLAUDE.md), just scoped to one workspace.
+
+Lives under `.samixa/` (renamed from `.coding-assistant/` -- see
+project_doc.py in this package for the companion static-context file,
+SAMIXA.md, which is the other half of the CLAUDE.md analogy: this file is
+dynamic/tool-appended, SAMIXA.md is static/human-authored).
 """
 
 from __future__ import annotations
 
 from pathlib import Path
 
-MEMORY_RELATIVE_PATH = Path(".coding-assistant") / "MEMORY.md"
+MEMORY_RELATIVE_PATH = Path(".samixa") / "MEMORY.md"
 # Kept small on purpose -- this is injected into every system prompt, and a
 # huge memory file would eat into the same 16k budget conversation history
 # competes for. Old notes are dropped from the top (oldest first) rather
 # than refusing to save a new one.
 MAX_MEMORY_CHARS = 4000
 
-_HEADER = "# Coding Assistant Memory\n\nNotes the user has asked to be remembered across sessions.\n"
+_HEADER = "# Samixa Code Memory\n\nNotes the user has asked to be remembered across sessions.\n"
 
 
 def memory_path(workspace_root: Path) -> Path:

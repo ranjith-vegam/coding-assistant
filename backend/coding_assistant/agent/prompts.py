@@ -10,7 +10,38 @@ otherwise cover.
 from __future__ import annotations
 
 
-def build_system_prompt(workspace_root: str, memory: str | None = None) -> str:
+def build_system_prompt(workspace_root: str, memory: str | None = None, project_doc: str | None = None) -> str:
+    if project_doc:
+        # Read only when present (see agent/project_doc.py) -- authoritative
+        # background the developer already wrote by hand.
+        project_doc_section = f"""
+
+The following is SAMIXA.md, a project-context file the developer keeps at \
+the root of this workspace, describing how this codebase works, its \
+conventions, and anything else worth knowing before touching it. Treat it \
+as authoritative background, not a suggestion:
+
+{project_doc}
+"""
+    else:
+        # No SAMIXA.md yet -- don't silently do nothing about it, but don't
+        # write one unprompted either. Build it up opportunistically as real
+        # project knowledge accumulates from the user's own queries, gated
+        # behind the same write_file approval as any other write.
+        project_doc_section = """
+
+There is no SAMIXA.md at this workspace's root yet. As you explore this \
+codebase and learn durable, project-level facts (architecture, key \
+directories, conventions, non-obvious constraints) in the course of \
+answering the user's actual questions, propose creating or updating \
+SAMIXA.md with a write_file/edit_file call so future sessions start with \
+that context instead of re-deriving it. Do this opportunistically, not on \
+every turn -- only once you've actually learned something worth recording, \
+and only durable facts about the project itself (not this specific task, \
+not user preferences -- those belong in remember/MEMORY.md instead). Like \
+any write, it still requires the user's approval.
+"""
+
     memory_section = ""
     if memory:
         memory_section = f"""
@@ -24,6 +55,7 @@ repeat a mistake or re-ask something already settled here:
 
     return f"""You are a coding assistant working directly in the developer's local \
 workspace at: {workspace_root}
+{project_doc_section}
 
 All file paths you use in tool calls should be relative to this workspace root.
 

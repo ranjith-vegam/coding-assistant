@@ -60,6 +60,19 @@ async def test_write_file_creates_parent_dirs(tmp_path):
     assert "wrote" in result.content
 
 
+async def test_write_file_result_reports_line_count_not_byte_size(tmp_path):
+    result = await WriteFileTool().run({"path": "out.py", "content": "one\ntwo\nthree\n"}, tmp_path)
+
+    assert result.content == "wrote 3 lines to out.py"
+    assert "bytes" not in result.content
+
+
+async def test_write_file_result_singular_for_one_line(tmp_path):
+    result = await WriteFileTool().run({"path": "out.py", "content": "just one line"}, tmp_path)
+
+    assert result.content == "wrote 1 line to out.py"
+
+
 async def test_edit_file_requires_unique_match(tmp_path):
     (tmp_path / "a.py").write_text("foo\nfoo\n")
 

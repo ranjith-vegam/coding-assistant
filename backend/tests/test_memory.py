@@ -22,10 +22,10 @@ def test_append_multiple_notes_keeps_all_of_them(tmp_path):
     assert "second note" in memory
 
 
-def test_memory_file_lives_under_dot_coding_assistant(tmp_path):
+def test_memory_file_lives_under_dot_samixa(tmp_path):
     append_memory_note(tmp_path, "note")
     path = memory_path(tmp_path)
-    assert path.parent.name == ".coding-assistant"
+    assert path.parent.name == ".samixa"
     assert path.name == "MEMORY.md"
     assert path.is_file()
 

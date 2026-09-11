@@ -83,6 +83,49 @@ async def test_long_title_is_truncated():
     assert loaded.title.endswith("…")
 
 
+async def test_save_messages_uses_generated_title_over_the_heuristic():
+    store = make_store()
+    record = await store.create_chat("alice@example.com", "/workspace")
+    messages = [ChatMessage(role="user", content="please refactor the auth module")]
+
+    await store.save_messages(
+        record.chat_id, "alice@example.com", "/workspace", messages, generated_title="Refactor auth module"
+    )
+    loaded = await store.load_chat(record.chat_id)
+
+    assert loaded.title == "Refactor auth module"
+
+
+async def test_save_messages_falls_back_to_heuristic_when_no_generated_title():
+    store = make_store()
+    record = await store.create_chat("alice@example.com", "/workspace")
+    messages = [ChatMessage(role="user", content="please refactor the auth module")]
+
+    await store.save_messages(record.chat_id, "alice@example.com", "/workspace", messages, generated_title=None)
+    loaded = await store.load_chat(record.chat_id)
+
+    assert loaded.title == "please refactor the auth module"
+
+
+async def test_save_messages_never_overwrites_an_existing_real_title_with_a_generated_one():
+    store = make_store()
+    record = await store.create_chat("alice@example.com", "/workspace")
+    await store.save_messages(
+        record.chat_id, "alice@example.com", "/workspace", [ChatMessage(role="user", content="q1")], generated_title="First title"
+    )
+
+    await store.save_messages(
+        record.chat_id,
+        "alice@example.com",
+        "/workspace",
+        [ChatMessage(role="user", content="q1"), ChatMessage(role="user", content="q2")],
+        generated_title="Should never apply",
+    )
+
+    loaded = await store.load_chat(record.chat_id)
+    assert loaded.title == "First title"
+
+
 async def test_list_chats_orders_most_recently_updated_first():
     store = make_store()
     first = await store.create_chat("alice@example.com", "/workspace")

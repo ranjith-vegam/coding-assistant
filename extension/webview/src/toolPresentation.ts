@@ -37,6 +37,6 @@ export function summarizeResult(name: string, content: string): string {
     return `${content.split("\n").filter((l) => l.trim()).length} entries`;
   }
   // write_file/edit_file/run_command already return a good one-line summary
-  // as their first line (e.g. "wrote 16 bytes to note.txt").
+  // as their first line (e.g. "wrote 16 lines to note.txt").
   return trimmed.split("\n")[0] ?? "";
 }
