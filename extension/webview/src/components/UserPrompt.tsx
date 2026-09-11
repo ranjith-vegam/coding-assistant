@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 
 interface Props {
   text: string;
@@ -14,6 +15,12 @@ interface Props {
 // feature: restores the workspace's files to their state before this
 // message, and truncates the conversation back to here (the original text
 // is handed back into the composer, matching Claude Code's own behavior).
+//
+// Icon-only (a circular-arrow glyph, no "Rewind" label) so it reads as a
+// quiet corner control, not a labeled action competing with the message
+// text. Confirmation is a centered modal over the whole panel (via a portal
+// to <body>, so it isn't clipped by .log's overflow/scroll) instead of an
+// inline confirm banner squeezed under one specific message.
 export function UserPrompt({ text, canRewind, onRewind }: Props) {
   const [confirming, setConfirming] = useState(false);
 
@@ -26,32 +33,48 @@ export function UserPrompt({ text, canRewind, onRewind }: Props) {
             className={`rewind-button${confirming ? " pinned" : ""}`}
             onClick={() => setConfirming(true)}
             title="Restore code and conversation to before this message"
+            aria-label="Restore code and conversation to before this message"
           >
-            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <path d="M4 4.5A6 6 0 1 1 3 9" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" fill="none" />
-              <path d="M4 2v3h3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path
+                d="M3.5 8a4.5 4.5 0 1 1 1.5 3.35"
+                stroke="currentColor"
+                strokeWidth="1.4"
+                strokeLinecap="round"
+                fill="none"
+              />
+              <path d="M3.5 5v3h3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" fill="none" />
             </svg>
-            Rewind
           </button>
         )}
       </div>
-      {confirming && (
-        <div className="rewind-confirm">
-          <span>Rewind code + conversation to here?</span>
-          <button
-            className="tool-link-btn approve"
-            onClick={() => {
-              setConfirming(false);
-              onRewind();
-            }}
-          >
-            Yes, rewind
-          </button>
-          <button className="tool-link-btn" onClick={() => setConfirming(false)}>
-            Cancel
-          </button>
-        </div>
-      )}
+      {confirming &&
+        createPortal(
+          <div className="modal-backdrop" onClick={() => setConfirming(false)}>
+            <div className="modal-card" onClick={(event) => event.stopPropagation()}>
+              <div className="modal-title">Rewind to here?</div>
+              <div className="modal-body">
+                This restores the workspace's files to their state before this message, and removes everything after
+                it from the conversation.
+              </div>
+              <div className="modal-actions">
+                <button className="modal-btn" onClick={() => setConfirming(false)}>
+                  Cancel
+                </button>
+                <button
+                  className="modal-btn primary"
+                  onClick={() => {
+                    setConfirming(false);
+                    onRewind();
+                  }}
+                >
+                  Rewind
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

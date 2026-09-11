@@ -1,6 +1,6 @@
 {
-  "name": "coding-assistant",
-  "displayName": "Coding Assistant",
+  "name": "samixa-code",
+  "displayName": "Samixa Code",
   "description": "A Claude-Code-like coding agent backed by locally hosted models.",
   "version": "0.1.0",
   "private": true,
@@ -15,21 +15,21 @@
   "contributes": {
     "commands": [
       {
-        "command": "codingAssistant.openChat",
-        "title": "Coding Assistant: Open Chat"
+        "command": "samixaCode.openChat",
+        "title": "Samixa Code: Open Chat"
       },
       {
-        "command": "codingAssistant.switchUser",
-        "title": "Coding Assistant: Switch User"
+        "command": "samixaCode.switchUser",
+        "title": "Samixa Code: Switch User"
       }
     ],
     "configuration": {
-      "title": "Coding Assistant",
+      "title": "Samixa Code",
       "properties": {
-        "codingAssistant.backendWsUrl": {
+        "samixaCode.backendWsUrl": {
           "type": "string",
           "default": "ws://127.0.0.1:8765/ws/chat",
-          "description": "WebSocket URL of the coding-assistant-backend's chat endpoint."
+          "description": "WebSocket URL of the samixa-code-backend's chat endpoint."
         }
       }
     }

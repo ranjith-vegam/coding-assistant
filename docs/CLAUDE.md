@@ -1,4 +1,4 @@
-# Coding Assistant — Project Context
+# Samixa Code — Project Context
 
 A Claude-Code-like coding agent, built from scratch: a VS Code extension
 (thin client) driving a local Python backend (agent loop, tools, retrieval)

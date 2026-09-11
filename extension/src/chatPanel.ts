@@ -16,7 +16,7 @@ import { WebviewOutboundMessage } from "../shared/protocol";
 // Remembers the last-active chat per workspace so reopening the panel (or
 // reloading the VS Code window) resumes it instead of always starting fresh.
 function lastChatStorageKey(workspaceRoot: string): string {
-  return `codingAssistant.lastChatId:${workspaceRoot}`;
+  return `samixaCode.lastChatId:${workspaceRoot}`;
 }
 
 export class ChatPanel {
@@ -34,8 +34,8 @@ export class ChatPanel {
       return;
     }
     const panel = vscode.window.createWebviewPanel(
-      "codingAssistantChat",
-      "Coding Assistant",
+      "samixaCodeChat",
+      "Samixa Code",
       vscode.ViewColumn.Beside,
       {
         enableScripts: true,

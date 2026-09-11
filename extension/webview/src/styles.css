@@ -196,25 +196,30 @@ body {
 }
 /* Room for the Rewind button so it never overlaps the first line of text. */
 .user-prompt-card.has-rewind .user-prompt {
-  padding-right: 72px;
+  padding-right: 40px;
 }
 
+/* Icon-only, circular -- a quiet corner control, not a labeled action
+   competing with the message text (no "Rewind" wording on the button
+   itself; the label lives in the confirm modal instead). */
 .rewind-button {
+  all: unset;
+  box-sizing: border-box;
   position: absolute;
   top: 6px;
   right: 6px;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 3px 8px;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
   border: 1px solid var(--vscode-widget-border, rgba(127, 127, 127, 0.3));
   background: var(--vscode-editor-background);
   color: var(--muted);
-  font-size: 0.78em;
   cursor: pointer;
-  border-radius: var(--radius-sm);
   opacity: 0;
-  transition: opacity 0.12s ease;
+  transition: opacity 0.12s ease, background-color 0.1s ease, color 0.1s ease;
 }
 .user-prompt-card:hover .rewind-button,
 .rewind-button.pinned {
@@ -226,16 +231,65 @@ body {
   border-color: var(--accent);
 }
 
-.rewind-confirm {
+/* ---------- modal: centered overlay over the whole panel (portaled to
+   <body>), used for the rewind confirmation instead of an inline banner
+   squeezed under one message ---------- */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
   display: flex;
   align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.35);
+}
+.modal-card {
+  width: 100%;
+  max-width: 320px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--vscode-widget-border, rgba(127, 127, 127, 0.25));
+  background: var(--vscode-editorWidget-background, var(--vscode-editor-background));
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.3);
+  padding: 16px;
+}
+.modal-title {
+  font-weight: 600;
+  font-size: 1em;
+  margin-bottom: 6px;
+}
+.modal-body {
+  color: var(--muted);
+  font-size: 0.88em;
+  line-height: 1.5;
+  margin-bottom: 14px;
+}
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
   gap: 8px;
-  padding: 6px 10px;
-  margin-left: 2px;
+}
+.modal-btn {
+  all: unset;
+  box-sizing: border-box;
+  padding: 6px 14px;
   border-radius: var(--radius-sm);
-  background: var(--vscode-inputValidation-warningBackground, rgba(190, 150, 40, 0.12));
-  border: 1px solid var(--vscode-terminal-ansiYellow, rgba(190, 150, 40, 0.4));
-  font-size: 0.85em;
+  font-size: 0.88em;
+  cursor: pointer;
+  color: var(--vscode-foreground);
+  background: transparent;
+}
+.modal-btn:hover {
+  background: var(--vscode-list-hoverBackground);
+}
+.modal-btn.primary {
+  background: var(--accent);
+  color: var(--vscode-button-foreground, #fff);
+}
+.modal-btn.primary:hover {
+  opacity: 0.9;
+  background: var(--accent);
 }
 
 /* ---------- assistant text: rendered markdown, plain flow, no card ---------- */

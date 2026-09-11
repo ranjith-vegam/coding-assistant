@@ -27,6 +27,8 @@ Wire protocol (JSON over one WebSocket connection):
                                                                               (see agent/history_replay.py),
                                                                               sent on init/new_chat/switch_chat
     {"type": "chat_list", "chats": [{chat_id, title, workspace_root, updated_at}, ...]}
+                                    -- scoped to (user_id, workspace_root) of THIS connection,
+                                       not every chat this user has ever had (see chat_store.py)
     {"type": "chat_renamed", "chat_id": ..., "title": ...}   -- sent once, right after the
                                                                  chat's first turn, when a
                                                                  real title was generated
@@ -187,12 +189,19 @@ async def ws_chat(websocket: WebSocket) -> None:
         task = current_run_task["task"]
         return bool(task and not task.done())
 
-    # --- Initial chat: resume the requested chat_id if it's real and owned
-    # by this user, otherwise start a fresh one. ---
+    # --- Initial chat: resume the requested chat_id if it's real, owned by
+    # this user, AND belongs to this workspace -- otherwise start a fresh one. ---
     requested_chat_id = init.get("chat_id")
     initial_record = await store.load_chat(requested_chat_id) if requested_chat_id else None
     if initial_record is not None and initial_record.user_id != user_id:
         initial_record = None  # never load another user's chat just because its id was guessed/stale
+    if initial_record is not None and initial_record.workspace_root != str(workspace_root):
+        # The extension's remembered "last chat" is itself workspace-scoped
+        # (chatPanel.ts keys it by workspace root in VS Code's workspaceState),
+        # so this shouldn't normally happen -- but never trust a client-supplied
+        # id enough to resume a chat that actually belongs to a different
+        # project's workspace.
+        initial_record = None
     if initial_record is None:
         initial_record = await store.create_chat(user_id, str(workspace_root))
     await enter_chat(initial_record)
@@ -260,14 +269,14 @@ async def ws_chat(websocket: WebSocket) -> None:
                     continue
                 target_id = data.get("chat_id")
                 record = await store.load_chat(target_id) if target_id else None
-                if record is None or record.user_id != user_id:
+                if record is None or record.user_id != user_id or record.workspace_root != str(workspace_root):
                     await emit({"type": "error", "message": "Chat not found."})
                     continue
                 await enter_chat(record)
                 continue
 
             if message_type == "list_chats":
-                chats = await store.list_chats(user_id)
+                chats = await store.list_chats(user_id, str(workspace_root))
                 await emit({"type": "chat_list", "chats": [dataclasses.asdict(c) for c in chats]})
                 continue
 

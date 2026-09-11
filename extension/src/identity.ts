@@ -18,10 +18,10 @@ export interface Identity {
   token: string;
 }
 
-const STORAGE_KEY = "codingAssistant.identity";
+const STORAGE_KEY = "samixaCode.identity";
 
 function deriveToken(email: string): string {
-  return crypto.createHash("sha256").update(`coding-assistant:${email.toLowerCase().trim()}`).digest("hex").slice(0, 16);
+  return crypto.createHash("sha256").update(`samixa-code:${email.toLowerCase().trim()}`).digest("hex").slice(0, 16);
 }
 
 export function getStoredIdentity(context: vscode.ExtensionContext): Identity | undefined {

@@ -3,26 +3,26 @@ import { ChatPanel } from "./chatPanel";
 import { clearIdentity } from "./identity";
 
 export function activate(context: vscode.ExtensionContext): void {
-  const config = vscode.workspace.getConfiguration("codingAssistant");
+  const config = vscode.workspace.getConfiguration("samixaCode");
   const wsUrl = config.get<string>("backendWsUrl", "ws://127.0.0.1:8765/ws/chat");
 
   context.subscriptions.push(
-    vscode.commands.registerCommand("codingAssistant.openChat", () => {
+    vscode.commands.registerCommand("samixaCode.openChat", () => {
       const folder = vscode.workspace.workspaceFolders?.[0];
       if (!folder) {
-        vscode.window.showErrorMessage("Coding Assistant: open a folder/workspace first.");
+        vscode.window.showErrorMessage("Samixa Code: open a folder/workspace first.");
         return;
       }
       ChatPanel.createOrShow(context, wsUrl, folder.uri.fsPath);
     }),
 
-    vscode.commands.registerCommand("codingAssistant.switchUser", async () => {
+    vscode.commands.registerCommand("samixaCode.switchUser", async () => {
       const hadOpenPanel = Boolean(ChatPanel.current);
       ChatPanel.current?.disposeForSwitchUser();
       await clearIdentity(context);
       if (hadOpenPanel) {
         // Reopen immediately, in-panel sign-in form, no native prompt.
-        await vscode.commands.executeCommand("codingAssistant.openChat");
+        await vscode.commands.executeCommand("samixaCode.openChat");
       }
     })
   );

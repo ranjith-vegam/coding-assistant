@@ -7,7 +7,7 @@ does not host or serve models -- that's a separate, already-running service.
 
 ```
 extension/  (TypeScript, VS Code)
-  src/extension.ts     -- activation, registers "Coding Assistant: Open Chat"
+  src/extension.ts     -- activation, registers "Samixa Code: Open Chat"
   src/chatPanel.ts      -- webview chat UI (v0: plain text turns only)
   src/backendClient.ts   -- WebSocket client for the backend's /ws/chat
 
