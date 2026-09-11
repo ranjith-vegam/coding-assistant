@@ -37,7 +37,7 @@ results streamed back as discrete events → rendered in the React webview.
 
 ## What's actually built
 
-### Backend (`backend/coding_assistant/`)
+### Backend (`backend/samixa_code/`)
 
 **LLM client & parsing** (`llm/`)
 - `client.py` — `ModelOrchClient`: `chat()` and `embed()` against the real

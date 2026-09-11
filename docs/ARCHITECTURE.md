@@ -12,7 +12,7 @@ extension/  (TypeScript, VS Code)
   src/backendClient.ts   -- WebSocket client for the backend's /ws/chat
 
 backend/  (Python, uv-managed)
-  coding_assistant/
+  samixa_code/
     main.py              -- FastAPI app + uvicorn entrypoint
     settings.py            -- env-driven config (.env)
     api/
