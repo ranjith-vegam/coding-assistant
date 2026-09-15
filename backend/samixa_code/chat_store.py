@@ -161,6 +161,42 @@ class ChatStore:
         await self._write(record)
         await self._client.zadd(_user_workspace_chats_key(user_id, workspace_root), {chat_id: now})
 
+    async def delete_chat(self, chat_id: str, user_id: str, workspace_root: str) -> bool:
+        """Deletes a chat completely -- its JSON blob AND its index entries.
+        Returns False (does nothing) if the chat doesn't exist, isn't owned
+        by this user, or doesn't belong to this workspace -- same ownership
+        check as switch_chat/rename_chat, so a stale/foreign chat_id can't
+        delete something it shouldn't be able to see in the first place."""
+        record = await self.load_chat(chat_id)
+        if record is None or record.user_id != user_id or record.workspace_root != workspace_root:
+            return False
+        await self._client.delete(_chat_key(chat_id))
+        await self._client.zrem(_user_workspace_chats_key(user_id, workspace_root), chat_id)
+        # Also remove from the legacy global index in case this chat predates
+        # per-workspace scoping and hasn't been migrated yet (see
+        # _migrate_legacy_chats) -- otherwise a future migration would try to
+        # resurrect a chat_id whose blob no longer exists.
+        await self._client.zrem(_legacy_user_chats_key(user_id), chat_id)
+        return True
+
+    async def rename_chat(self, chat_id: str, user_id: str, workspace_root: str, title: str) -> ChatRecord | None:
+        """Explicit user-driven rename -- unlike save_messages's title logic
+        (which only ever sets a title once, starting from DEFAULT_TITLE),
+        this unconditionally overwrites whatever title is there now. Returns
+        None (does nothing) for an empty title, an unknown chat, or one that
+        isn't this user's/workspace's -- same ownership check as delete_chat."""
+        record = await self.load_chat(chat_id)
+        if record is None or record.user_id != user_id or record.workspace_root != workspace_root:
+            return None
+        trimmed = title.strip()
+        if not trimmed:
+            return None
+        record.title = trimmed[:TITLE_MAX_CHARS]
+        # Deliberately does NOT touch updated_at or the ZSET score -- renaming
+        # isn't "using" the chat, so it shouldn't bump its recency ordering.
+        await self._write(record)
+        return record
+
     async def list_chats(self, user_id: str, workspace_root: str, limit: int = 50) -> list[ChatSummary]:
         """Chats for this (user, workspace) pair only -- NOT every chat this
         user has ever had. See _migrate_legacy_chats for what happens the

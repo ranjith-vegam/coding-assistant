@@ -1,6 +1,6 @@
 // Thin WebSocket client for the Python backend's /ws/chat endpoint.
 //
-// Wire protocol (see backend/coding_assistant/api/chat.py and ../shared/protocol.ts):
+// Wire protocol (see backend/samixa_code/api/chat.py and ../shared/protocol.ts):
 //   send:    { type: "init", workspace_root, user_id, chat_id? }  -- first message, once per connection
 //            { type: "send", content: string }
 //            { type: "approval_response", id: string, approved: boolean }
@@ -129,6 +129,14 @@ export class BackendClient implements vscode.Disposable {
 
   listChats(): void {
     this.socket?.send(JSON.stringify({ type: "list_chats" }));
+  }
+
+  deleteChat(chatId: string): void {
+    this.socket?.send(JSON.stringify({ type: "delete_chat", chat_id: chatId }));
+  }
+
+  renameChat(chatId: string, title: string): void {
+    this.socket?.send(JSON.stringify({ type: "rename_chat", chat_id: chatId, title }));
   }
 
   private scheduleReconnect(): void {

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { createPortal } from "react-dom";
+import { ConfirmModal } from "./ConfirmModal";
 
 interface Props {
   text: string;
@@ -48,33 +48,18 @@ export function UserPrompt({ text, canRewind, onRewind }: Props) {
           </button>
         )}
       </div>
-      {confirming &&
-        createPortal(
-          <div className="modal-backdrop" onClick={() => setConfirming(false)}>
-            <div className="modal-card" onClick={(event) => event.stopPropagation()}>
-              <div className="modal-title">Rewind to here?</div>
-              <div className="modal-body">
-                This restores the workspace's files to their state before this message, and removes everything after
-                it from the conversation.
-              </div>
-              <div className="modal-actions">
-                <button className="modal-btn" onClick={() => setConfirming(false)}>
-                  Cancel
-                </button>
-                <button
-                  className="modal-btn primary"
-                  onClick={() => {
-                    setConfirming(false);
-                    onRewind();
-                  }}
-                >
-                  Rewind
-                </button>
-              </div>
-            </div>
-          </div>,
-          document.body
-        )}
+      {confirming && (
+        <ConfirmModal
+          title="Rewind to here?"
+          body="This restores the workspace's files to their state before this message, and removes everything after it from the conversation."
+          confirmLabel="Rewind"
+          onCancel={() => setConfirming(false)}
+          onConfirm={() => {
+            setConfirming(false);
+            onRewind();
+          }}
+        />
+      )}
     </div>
   );
 }

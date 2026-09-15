@@ -234,6 +234,13 @@ function reducer(state: State, action: Action): State {
         chats: state.chats.map((c) => (c.chat_id === event.chat_id ? { ...c, title: event.title } : c)),
       };
 
+    case "chat_deleted":
+      // If the deleted chat was the active one, the backend already sent
+      // (or is about to send) a "chat_ready" for the fresh replacement chat
+      // it created -- this just needs to drop the deleted one from the
+      // history list, nothing else.
+      return { ...state, chats: state.chats.filter((c) => c.chat_id !== event.chat_id) };
+
     case "chat_list":
       return { ...state, chats: event.chats };
 
@@ -322,6 +329,8 @@ export function App() {
   const handleNewChat = () => vscodeApi.postMessage({ type: "new_chat" });
   const handleSwitchChat = (chatId: string) => vscodeApi.postMessage({ type: "switch_chat", chat_id: chatId });
   const handleOpenHistory = () => vscodeApi.postMessage({ type: "list_chats" });
+  const handleDeleteChat = (chatId: string) => vscodeApi.postMessage({ type: "delete_chat", chat_id: chatId });
+  const handleRenameChat = (chatId: string, title: string) => vscodeApi.postMessage({ type: "rename_chat", chat_id: chatId, title });
   const handleSubmitIdentity = (email: string) => vscodeApi.postMessage({ type: "submit_identity", email });
 
   if (state.identityStatus === "loading") {
@@ -346,6 +355,8 @@ export function App() {
         onOpenHistory={handleOpenHistory}
         onSwitchChat={handleSwitchChat}
         onNewChat={handleNewChat}
+        onDeleteChat={handleDeleteChat}
+        onRenameChat={handleRenameChat}
       />
       <div className="log" ref={logRef}>
         {state.items.length === 0 && (

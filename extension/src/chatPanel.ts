@@ -105,6 +105,10 @@ export class ChatPanel {
           this.client.switchChat(message.chat_id);
         } else if (message.type === "list_chats") {
           this.client.listChats();
+        } else if (message.type === "delete_chat") {
+          this.client.deleteChat(message.chat_id);
+        } else if (message.type === "rename_chat") {
+          this.client.renameChat(message.chat_id, message.title);
         }
       },
       undefined,

@@ -37,8 +37,10 @@ export type BackendEvent =
   | { type: "chat_ready"; chat_id: string; title: string; items: ReplayItem[] }
   // Sent once, right after a chat's first turn completes, when a real
   // (LLM-generated -- see backend agent/title.py) title replaces "New Chat".
-  // Never sent again after that for the same chat.
+  // ALSO sent any time in response to a client "rename_chat" (a manual
+  // rename), not just the one-time auto-generated case.
   | { type: "chat_renamed"; chat_id: string; title: string }
+  | { type: "chat_deleted"; chat_id: string }
   | { type: "chat_list"; chats: ChatSummary[] }
   | { type: "cancelled" }
   | { type: "error"; message: string }
@@ -61,6 +63,8 @@ export type WebviewOutboundMessage =
   | { type: "new_chat" }
   | { type: "switch_chat"; chat_id: string }
   | { type: "list_chats" }
+  | { type: "delete_chat"; chat_id: string }
+  | { type: "rename_chat"; chat_id: string; title: string }
   // Submitted from the in-webview sign-in form (see SignIn.tsx) -- NOT a
   // native VS Code input box. chatPanel.ts persists it and only then starts
   // the actual backend connection.

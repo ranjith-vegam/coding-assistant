@@ -114,16 +114,16 @@ body {
   font-size: 0.88em;
   font-style: italic;
 }
+/* The row itself is a plain div (NOT a button) -- it contains the
+   clickable "switch to this chat" button (.chat-history-item-main) plus
+   rename/delete icon buttons as SIBLINGS, never nested inside it (nested
+   <button>s are invalid HTML and break click targeting). */
 .chat-history-item {
-  all: unset;
   box-sizing: border-box;
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 7px 9px;
   border-radius: var(--radius-sm);
-  cursor: pointer;
   font-size: 0.88em;
 }
 .chat-history-item:hover {
@@ -131,6 +131,17 @@ body {
 }
 .chat-history-item.active {
   background: var(--vscode-list-activeSelectionBackground, rgba(74, 144, 217, 0.15));
+}
+.chat-history-item-main {
+  all: unset;
+  box-sizing: border-box;
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 9px;
+  cursor: pointer;
 }
 .chat-history-item-title {
   flex: 1 1 auto;
@@ -144,6 +155,54 @@ body {
   flex: 0 0 auto;
   color: var(--muted);
   font-size: 0.85em;
+}
+.chat-history-item-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 4px 9px;
+  padding: 3px 6px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--accent);
+  background: var(--vscode-input-background, var(--vscode-editor-background));
+  color: var(--vscode-input-foreground, var(--vscode-foreground));
+  font-size: 1em;
+  font-family: inherit;
+}
+/* Rename/delete icons -- quiet, only appear on hover of the row (same
+   reveal convention as the rewind button on a user message), except for
+   the currently active chat where they stay visible since that row has no
+   other hover state competing for attention. */
+.chat-history-item-actions {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding-right: 6px;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+.chat-history-item:hover .chat-history-item-actions,
+.chat-history-item.active .chat-history-item-actions {
+  opacity: 1;
+}
+.chat-history-icon-button {
+  all: unset;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+  cursor: pointer;
+}
+.chat-history-icon-button:hover {
+  background: var(--vscode-toolbar-hoverBackground, rgba(127, 127, 127, 0.2));
+  color: var(--vscode-foreground);
+}
+.chat-history-icon-button.danger:hover {
+  color: var(--vscode-errorForeground, #e51400);
 }
 
 /* ---------- log / timeline -- flat, document-like, no bubbles ---------- */
@@ -290,6 +349,13 @@ body {
 .modal-btn.primary:hover {
   opacity: 0.9;
   background: var(--accent);
+}
+.modal-btn.primary.danger {
+  background: var(--vscode-errorForeground, #e51400);
+}
+.modal-btn.primary.danger:hover {
+  opacity: 0.9;
+  background: var(--vscode-errorForeground, #e51400);
 }
 
 /* ---------- assistant text: rendered markdown, plain flow, no card ---------- */

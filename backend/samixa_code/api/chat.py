@@ -12,6 +12,8 @@ Wire protocol (JSON over one WebSocket connection):
     {"type": "new_chat"}
     {"type": "switch_chat", "chat_id": "..."}
     {"type": "list_chats"}
+    {"type": "delete_chat", "chat_id": "..."}
+    {"type": "rename_chat", "chat_id": "...", "title": "..."}
 
   server -> client:
     {"type": "status", "status": "thinking"}
@@ -32,7 +34,10 @@ Wire protocol (JSON over one WebSocket connection):
     {"type": "chat_renamed", "chat_id": ..., "title": ...}   -- sent once, right after the
                                                                  chat's first turn, when a
                                                                  real title was generated
-                                                                 (see agent/title.py)
+                                                                 (see agent/title.py); ALSO
+                                                                 sent (any time) in response
+                                                                 to a client "rename_chat"
+    {"type": "chat_deleted", "chat_id": ...}
     {"type": "cancelled"}
     {"type": "error", "message": ...}
 
@@ -278,6 +283,40 @@ async def ws_chat(websocket: WebSocket) -> None:
             if message_type == "list_chats":
                 chats = await store.list_chats(user_id, str(workspace_root))
                 await emit({"type": "chat_list", "chats": [dataclasses.asdict(c) for c in chats]})
+                continue
+
+            if message_type == "delete_chat":
+                if turn_in_progress():
+                    await emit({"type": "error", "message": "Cannot delete a chat while a turn is in progress -- stop it first."})
+                    continue
+                target_id = data.get("chat_id")
+                deleted = bool(target_id) and await store.delete_chat(target_id, user_id, str(workspace_root))
+                if not deleted:
+                    await emit({"type": "error", "message": "Chat not found."})
+                    continue
+                if target_id == session.get("chat_id"):
+                    # The active chat was just deleted out from under this
+                    # connection -- the panel can't keep showing it, so start
+                    # a fresh one immediately rather than leaving it pointing
+                    # at a chat_id that no longer exists.
+                    record = await store.create_chat(user_id, str(workspace_root))
+                    await enter_chat(record)
+                await emit({"type": "chat_deleted", "chat_id": target_id})
+                continue
+
+            if message_type == "rename_chat":
+                target_id = data.get("chat_id")
+                new_title = data.get("title")
+                record = await store.rename_chat(target_id, user_id, str(workspace_root), new_title or "") if target_id else None
+                if record is None:
+                    await emit({"type": "error", "message": "Could not rename chat -- title must not be empty."})
+                    continue
+                if target_id == session.get("chat_id"):
+                    # Never let a later auto-generated title (agent/title.py,
+                    # fires once on a chat's first turn) clobber a title the
+                    # user just set by hand.
+                    session["title_generated"] = True
+                await emit({"type": "chat_renamed", "chat_id": target_id, "title": record.title})
                 continue
 
             if message_type == "send" and data.get("content"):

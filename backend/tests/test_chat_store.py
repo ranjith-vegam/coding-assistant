@@ -213,3 +213,109 @@ async def test_legacy_global_chats_are_migrated_into_the_correct_workspace_on_fi
 
     migrated = await store._client.zrange(scoped_key("alice@example.com", "/home/alice/project-a"), 0, -1)
     assert migrated == [project_a_record.chat_id]
+
+
+async def test_delete_chat_removes_it_from_load_and_list():
+    store = make_store()
+    record = await store.create_chat("alice@example.com", "/workspace")
+
+    deleted = await store.delete_chat(record.chat_id, "alice@example.com", "/workspace")
+
+    assert deleted is True
+    assert await store.load_chat(record.chat_id) is None
+    assert await store.list_chats("alice@example.com", "/workspace") == []
+
+
+async def test_delete_chat_does_not_affect_other_chats():
+    store = make_store()
+    keep = await store.create_chat("alice@example.com", "/workspace")
+    gone = await store.create_chat("alice@example.com", "/workspace")
+
+    await store.delete_chat(gone.chat_id, "alice@example.com", "/workspace")
+
+    chats = await store.list_chats("alice@example.com", "/workspace")
+    assert [c.chat_id for c in chats] == [keep.chat_id]
+
+
+async def test_delete_chat_refuses_a_different_users_chat():
+    store = make_store()
+    record = await store.create_chat("alice@example.com", "/workspace")
+
+    deleted = await store.delete_chat(record.chat_id, "bob@example.com", "/workspace")
+
+    assert deleted is False
+    assert await store.load_chat(record.chat_id) is not None  # untouched
+
+
+async def test_delete_chat_refuses_a_different_workspaces_chat():
+    store = make_store()
+    record = await store.create_chat("alice@example.com", "/home/alice/project-a")
+
+    deleted = await store.delete_chat(record.chat_id, "alice@example.com", "/home/alice/project-b")
+
+    assert deleted is False
+    assert await store.load_chat(record.chat_id) is not None
+
+
+async def test_delete_unknown_chat_returns_false():
+    store = make_store()
+    assert await store.delete_chat("does_not_exist", "alice@example.com", "/workspace") is False
+
+
+async def test_rename_chat_overwrites_the_title_unconditionally():
+    store = make_store()
+    record = await store.create_chat("alice@example.com", "/workspace")
+    await store.save_messages(
+        record.chat_id, "alice@example.com", "/workspace", [ChatMessage(role="user", content="q1")], generated_title="Auto title"
+    )
+
+    renamed = await store.rename_chat(record.chat_id, "alice@example.com", "/workspace", "My own title")
+
+    assert renamed is not None
+    assert renamed.title == "My own title"
+    loaded = await store.load_chat(record.chat_id)
+    assert loaded.title == "My own title"
+
+
+async def test_rename_chat_rejects_an_empty_title():
+    store = make_store()
+    record = await store.create_chat("alice@example.com", "/workspace")
+
+    result = await store.rename_chat(record.chat_id, "alice@example.com", "/workspace", "   ")
+
+    assert result is None
+    loaded = await store.load_chat(record.chat_id)
+    assert loaded.title == DEFAULT_TITLE  # unchanged
+
+
+async def test_rename_chat_truncates_an_overlong_title():
+    store = make_store()
+    record = await store.create_chat("alice@example.com", "/workspace")
+
+    await store.rename_chat(record.chat_id, "alice@example.com", "/workspace", "x" * 200)
+
+    loaded = await store.load_chat(record.chat_id)
+    assert len(loaded.title) == 60  # TITLE_MAX_CHARS, no ellipsis for an explicit manual rename
+
+
+async def test_rename_chat_refuses_a_different_users_chat():
+    store = make_store()
+    record = await store.create_chat("alice@example.com", "/workspace")
+
+    result = await store.rename_chat(record.chat_id, "bob@example.com", "/workspace", "Hijacked title")
+
+    assert result is None
+    loaded = await store.load_chat(record.chat_id)
+    assert loaded.title == DEFAULT_TITLE
+
+
+async def test_rename_chat_does_not_change_recency_order():
+    store = make_store()
+    first = await store.create_chat("alice@example.com", "/workspace")
+    second = await store.create_chat("alice@example.com", "/workspace")
+
+    await store.rename_chat(first.chat_id, "alice@example.com", "/workspace", "Renamed")
+
+    chats = await store.list_chats("alice@example.com", "/workspace")
+    assert chats[0].chat_id == second.chat_id  # still most-recent first -- rename didn't bump `first`
+    assert chats[1].chat_id == first.chat_id
